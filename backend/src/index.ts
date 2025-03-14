@@ -35,9 +35,6 @@ const db = {
 const ACCESS_SECRET = process.env.ACCESS_SECRET!;
 const REFRESH_SECRET = process.env.REFRESH_SECRET!;
 
-// A simple lookup for the latest refresh token per user
-let refreshTokens: Record<string, string> = {};
-
 // Generate a short-lived access token (5s for demo; ~15min for real apps)
 const generateAccessToken = (user: any) =>
   jwt.sign({ id: user.id }, ACCESS_SECRET, { expiresIn: "5s" });
@@ -48,7 +45,7 @@ const generateRefreshToken = (user: any) => {
   const token = jwt.sign({ id: user.id, tokenId }, REFRESH_SECRET, {
     expiresIn: "7d",
   });
-  refreshTokens[user.id] = token;
+
   return token;
 };
 
