@@ -1,6 +1,5 @@
 // Configuration
-const API_URL =
-  "https://5fb9-2804-29b8-50d0-db18-7892-5e58-43c9-a883.ngrok-free.app";
+const API_URL = "http://localhost:5500";
 
 // DOM Element IDs
 const ELEMENTS = {
