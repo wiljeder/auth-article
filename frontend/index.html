@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script defer src="script.js"></script>
+  </head>
+  <body>
+    <div id="loader">Loading...</div>
+    <div id="content" style="display: none">
+      <form id="login-form">
+        <h2>Login</h2>
+        <input id="username" placeholder="Username" />
+        <input id="password" type="password" placeholder="Password" />
+        <button type="submit">Login</button>
+      </form>
+      <button id="secret-button" onclick="fetchSecret()">Get Secret</button>
+      <button id="logout-button" onclick="logout()" style="display: none">
+        Logout
+      </button>
+      <p id="message"></p>
+    </div>
+  </body>
+</html>
