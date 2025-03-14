@@ -1,18 +1,7 @@
-// Configuration
-const API_URL = "http://localhost:5500";
+const API_URL = "http://localhost:5000";
+// Or wherever your backend is running
 
-// DOM Element IDs
-const ELEMENTS = {
-  content: "content",
-  loginForm: "login-form",
-  logoutButton: "logout-button",
-  loader: "loader",
-  message: "message",
-};
-
-/**
- * Show or hide an element by ID
- */
+// DOM helpers
 function toggleVisibility(elementId, visible) {
   const element = document.getElementById(elementId);
   if (element) {
@@ -20,33 +9,24 @@ function toggleVisibility(elementId, visible) {
   }
 }
 
-/**
- * Display a temporary message to the user
- */
 function setMessage(message) {
-  const messageElement = document.getElementById(ELEMENTS.message);
+  const messageElement = document.getElementById("message");
   messageElement.innerText = message;
-
-  // Clear message after 3 seconds
+  // Clear after 3 seconds
   setTimeout(() => {
     messageElement.innerText = "";
   }, 3000);
 }
 
-/**
- * Handle user login
- */
+// Authentication functions
 async function login(e) {
   e.preventDefault();
 
   try {
     const res = await fetch(`${API_URL}/auth/login`, {
       method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "true",
-      },
+      credentials: "include", // Important for cookies
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         username: document.getElementById("username").value,
         password: document.getElementById("password").value,
@@ -62,22 +42,18 @@ async function login(e) {
     localStorage.setItem("accessToken", accessToken);
     setMessage("Logged in!");
 
-    toggleVisibility(ELEMENTS.logoutButton, true);
-    toggleVisibility(ELEMENTS.loginForm, false);
+    toggleVisibility("logout-button", true);
+    toggleVisibility("login-form", false);
   } catch (error) {
     console.error("Login failed:", error);
     setMessage("Login error occurred!");
   }
 }
 
-/**
- * Refresh the authentication token
- */
 async function refreshToken() {
   const res = await fetch(`${API_URL}/auth/refresh`, {
     method: "POST",
-    credentials: "include",
-    headers: { "ngrok-skip-browser-warning": "true" },
+    credentials: "include", // Include cookies
   });
 
   if (res.ok) {
@@ -89,15 +65,11 @@ async function refreshToken() {
   // Handle refresh failure
   localStorage.removeItem("accessToken");
   setMessage("Session expired. Please log in again.");
-  toggleVisibility(ELEMENTS.loginForm, true);
-  toggleVisibility(ELEMENTS.logoutButton, false);
-
+  toggleVisibility("login-form", true);
+  toggleVisibility("logout-button", false);
   throw new Error("Failed to refresh token");
 }
 
-/**
- * Fetch protected content using token authentication
- */
 async function fetchSecret() {
   let token = localStorage.getItem("accessToken");
   if (!token) {
@@ -106,29 +78,28 @@ async function fetchSecret() {
   }
 
   try {
-    // First attempt with current token
+    // First attempt
     let res = await fetch(`${API_URL}/protected/secret`, {
       headers: {
         Authorization: `Bearer ${token}`,
-        "ngrok-skip-browser-warning": "true",
       },
       credentials: "include",
     });
 
-    // If token expired, try refreshing and retry
+    // If the token has expired or is invalid, try refreshing
     if (!res.ok) {
       token = await refreshToken();
       res = await fetch(`${API_URL}/protected/secret`, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "ngrok-skip-browser-warning": "true",
         },
         credentials: "include",
       });
     }
 
     if (res.ok) {
-      setMessage(await res.text());
+      const data = await res.json();
+      setMessage(data.message);
     } else {
       setMessage("Failed to fetch secret.");
     }
@@ -138,35 +109,32 @@ async function fetchSecret() {
   }
 }
 
-/**
- * Log the user out
- */
 function logout() {
   localStorage.removeItem("accessToken");
-  toggleVisibility(ELEMENTS.logoutButton, false);
-  toggleVisibility(ELEMENTS.loginForm, true);
+  toggleVisibility("logout-button", false);
+  toggleVisibility("login-form", true);
   setMessage("Logged out!");
 }
 
-// Initialize the application
+// Initialize
 document.addEventListener("DOMContentLoaded", async () => {
-  // Set up event listeners
-  document.getElementById(ELEMENTS.loginForm).addEventListener("submit", login);
+  // Setup login listener
+  document.getElementById("login-form").addEventListener("submit", login);
 
-  // Check if user is already logged in
+  // If we already have a token, attempt to use it
   const accessToken = localStorage.getItem("accessToken");
   if (accessToken) {
     try {
       await fetchSecret();
-      toggleVisibility(ELEMENTS.loginForm, false);
-      toggleVisibility(ELEMENTS.logoutButton, true);
+      toggleVisibility("login-form", false);
+      toggleVisibility("logout-button", true);
     } catch (error) {
-      // Token invalid, log the user out
+      // If the token is invalid, reset everything
       logout();
     }
   }
 
-  // Hide loader and show content
-  toggleVisibility(ELEMENTS.loader, false);
-  document.getElementById(ELEMENTS.content).style.display = "block";
+  // Hide the loader, show content
+  toggleVisibility("loader", false);
+  document.getElementById("content").style.display = "block";
 });
